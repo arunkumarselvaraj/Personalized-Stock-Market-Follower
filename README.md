@@ -1,6 +1,7 @@
 # Personalized-Stock-Market-Follower
 
 Stock Market Follower is a single-page web application that continuously monitors(updates every 5 seconds) the prices of added stock symbols.
+
 Implemented using JavaScript, HTML and Bootstrap.
 
 ## What is the aim?
