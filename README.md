@@ -8,7 +8,7 @@ Implemented using JavaScript, HTML and Bootstrap.
 The aim of the project is to create a easy-to-visualize (eg. charts) single-page web application to continuously monitor the stock prices of user-preferred stock symbols.
 
 ## What can be improved?
-The history of stock prices can be stored and visualized to understand more about stock prices' fluctuations.
+The history of stock prices can be stored and visualized to understand more about stock prices' fluctuations. Color-wise differentiations can also be added.
 
 ## Do you want to contribute?
 Your contributions are always welcome! Feel free to improve existing code, documentation or implement new algorithm. If there are big changes, kindly open an issue to propose them.
