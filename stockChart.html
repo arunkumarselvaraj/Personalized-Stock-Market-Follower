@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+		<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+		<script>
+			function addStockSymbolFunction() {														//function to get new stock symbol and check if it's valid
+				var newSymbol = document.getElementById("newStockSymbol");
+				if(newSymbol.value != "") {
+					if(document.getElementById(newSymbol.value) == null) {
+						url = "https://api.iextrading.com/1.0/stock/" + newSymbol.value + "/price";	//this API is used to check if the given stock symbol is valid
+						var xmlHttp = new XMLHttpRequest();
+						xmlHttp.onreadystatechange = function() {
+							if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+								if(xmlHttp.responseText != null) {
+									displaySymbols();
+								}
+							}else if(xmlHttp.readyState == 4 && xmlHttp.status != 200) {
+								newSymbol.value = "";
+							alertFunction("invalid");												//invalid stock symbol error check
+							}
+						}
+						xmlHttp.open("GET", url, true);
+						xmlHttp.send(null);
+					}else {
+						newSymbol.value = "";
+						alertFunction("duplicate");													//duplicate stock symbol error check
+					}
+				}else {
+					alertFunction("empty");															//null stock symbol error check
+				}
+			}
+			function alertFunction(reason) {														//function to handle all the errors. alert messages are thrown to user appropriately
+				if(reason == "empty") {
+					alert("Please enter a valid stock symbol!");
+				} else if(reason == "duplicate") {
+					alert("The stock symbol has already been added.\nPease enter a different one!");
+				} else if(reason == "invalid") {
+					alert("That's an invalid stock symbol.\nPease enter a valid one!");
+				}
+			}
+			function displaySymbols() {																//function to display the stock symbols as unordered list
+				var newSymbol = document.getElementById("newStockSymbol");
+				var existingSymbols = document.getElementById("stockSymbolsHeading");
+				if(existingSymbols != undefined) {
+					existingSymbols.innerHTML = "Added Stock Symbols";
+				}
+				var addedStockSymbols = document.getElementById("existingStockSymbols");
+				var li = document.createElement("li");
+				li.appendChild(document.createTextNode(newSymbol.value.toUpperCase()));
+				li.setAttribute("id", newSymbol.value);
+				// li.setAttribute("class", "list-group-item");
+				addedStockSymbols.appendChild(li);
+				newSymbol.value = "";
+				getStockPrices();
+			}
+			function getStockPrices() {																//function to call the GET API to fetch the latest stock prices
+				var symbols = document.getElementById("existingStockSymbols");
+				var listItem = symbols.getElementsByTagName("li");
+				if(listItem != undefined) {
+					var commaSeparatedStockSymbols = listItem[0].innerHTML;
+				}
+				for(var i=1; i<listItem.length; i++) {
+					commaSeparatedStockSymbols = commaSeparatedStockSymbols + "," + listItem[i].innerHTML;
+				}
+				var url = "https://api.iextrading.com/1.0/stock/market/batch?symbols=" + commaSeparatedStockSymbols + "&types=quote";
+				var xmlHttp = new XMLHttpRequest();
+				xmlHttp.onreadystatechange = function() {
+					if(xmlHttp.readyState == 4 && xmlHttp.status == 200) {
+						var apiResponse = JSON.parse(this.responseText);
+						console.log("API Response : " + apiResponse);
+						var stockSymbols = [];
+						var stockPrices = [];
+						for(oneStockResponse in apiResponse) {
+							console.log("single API Response : " + apiResponse[oneStockResponse]);
+							stockSymbols.push(apiResponse[oneStockResponse].quote.symbol);
+							stockPrices.push(apiResponse[oneStockResponse].quote.latestPrice);		//parsing the response JSON to get the stock price
+						}
+						drawPlotlyChart(stockSymbols, stockPrices);
+					}
+				}
+				xmlHttp.open("GET", url, true);
+				xmlHttp.send(null);
+			}
+			function drawPlotlyChart(stockSymbols, stockPrices) {									//function to draw Bar chart for all the stock symbols
+				var data = [{
+					x: stockSymbols,
+					y: stockPrices,
+					type: 'bar',
+					text: stockPrices,
+					textposition: 'auto',
+					hoverinfo: 'none',
+					name: 'Price'
+				}];
+				var layout = {
+					title: 'Stock Prices',
+					showlegend: true
+				}
+				Plotly.newPlot('PlotlyChartID', data, layout);
+				var update = {
+					width: 800,
+					height: 500
+				};
+				Plotly.relayout('PlotlyChartID', update);
+			}
+			setInterval(function() {																//function to update the stock prices once in every 5 seconds
+				getStockPrices();
+			}, 5000);
+		</script>
+	</head>
+	<body>
+		<div class="container">																		<!--body of the HTML page with bootstrap styling -->
+			<h1>Stock Quotes App</h1>
+			<div class="row">
+				<div class="col-sm-3 col-sm-offset-0">
+					<div class="input-group" width="50%">
+						<input type="text" class="form-control" name="input" id="newStockSymbol" placeholder="Stock Symbol"></div>
+						<span class="input-group-btn">
+							<button class="btn btn-primary" type="button" id="addButton" onclick="addStockSymbolFunction();"> Add </button>
+						</span>
+					</div>
+				</div>
+			</div> <br/> <br/>
+			<form>
+				<h4 id="stockSymbolsHeading"></h4>
+				<ul class="list-group", id="existingStockSymbols"></ul>
+				<div id="PlotlyChartID"></div>
+			</form>
+		</div>
+	</body>
+</html>
